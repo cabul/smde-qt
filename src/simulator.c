@@ -1,28 +1,57 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <getopt.h>
 
 #include "utils.h"
 #include "simulator.h"
 
 int main (int argc, char *argv[]) {
-	check(argc >= 2, "usage: %s <datafile> [<niter>] [<rho>]", argv[0]);
-
-	FILE *f = fopen(argv[1], "r");
-	check(f, "Unable to open %s for reading", argv[1]);
-
+	int opt, opt_index;
+	FILE *f = NULL;
+	
 	struct params params;
-	parse_params(f, &params);
-
-	fclose(f);
-
-	int niter = (argc>2) ? atoi(argv[2]) : 1000;
-	check(niter>0, "Invalid value for niter %s", argv[2]);
-
-	double rho = (argc>3) ? atof(argv[3]) : 0.2;
-
-	//srand(time(NULL));
-	srand(1993);
+	params.niter = 100;
+	params.rho   = 0.5;
+	params.seed  = time(NULL);
+	
+	static struct option options[] =  {
+		{"help",   no_argument,       0, 'h'},
+		{"file",   required_argument, 0, 'f'},
+		{"rho",    required_argument, 0, 'r'},
+		{"cycles", required_argument, 0, 'c'},
+		{"seed",   required_argument, 0, 's'},
+		{0, 0, 0, 0}
+	};
+	
+	while ((opt = getopt_long(argc, argv, "hf:r:c:s:", options, &opt_index)) != -1) {
+		switch (opt) {
+			case 'h':
+				printf("Usage: %s --file f [--rho r] [--cycles c] [--seed s]\n", argv[0]);
+				return 0;
+			case 'f':
+				f = fopen(optarg, "r");
+				check(f, "Unable to open %s for reading", optarg);
+				parse_params(f, &params);
+				fclose(f);
+				break;
+			case 'r':
+				params.rho = atoi(optarg);
+				check(params.rho > 0, "Rho have to be a positive real value");
+				break;
+			case 'c':
+				params.niter = atoi(optarg);
+				check(params.niter > 0, "Cycles have to be a positive integer number");
+				break;
+			case 's':
+				params.seed = atof(optarg);
+				break;
+		}
+	}
+	
+	check(f, "An input file describing the bulk system is needed");
+	
+	srand(params.seed);
 
 	print_params(stderr, &params);
 	fprintf(stderr, "tau distribution:\n");
@@ -36,11 +65,11 @@ int main (int argc, char *argv[]) {
 		.type = ERLANG,
 		.data.erlang = {
 			.shape = 1,
-			.rate = 1 / params.mu;
+			.rate = 1 / params.mu
 		}
 	};
 
-	struct cycle *cycles = malloc(sizeof(struct cycle) * niter);
+	struct cycle *cycles = malloc(sizeof(struct cycle) * params.niter);
 	memcheck(cycles);
 	
 	double X_mean  = 0;
@@ -55,7 +84,7 @@ int main (int argc, char *argv[]) {
 	double sim_time = 0.0;
 	double time_limit = 0.0;
 
-	for (int i=0; i<niter-1; ++i) {
+	for (int i=0; i<params.niter-1; ++i) {
 		cycles[i].tau = rand_dist(&params.dist_tau);
 		cycles[i].tau = min(cycles[i].x, cycles[i].tau);
 		cycles[i+1].x = rand_dist(&params.dist_x);
@@ -79,7 +108,7 @@ int main (int argc, char *argv[]) {
 		cycles[i].A = A_1 + A_2;
 		cycles[i+1].T = cycles[i].T + cycles[i].tau;
 		cycles[i].Y = A_1;
-		cycles[i+1].X = cycles[i].Y
+		cycles[i+1].X = cycles[i].Y;
 	}
 
 	free(cycles);

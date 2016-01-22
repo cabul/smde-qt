@@ -54,6 +54,9 @@ struct params {
 	double C;
 	double mu;
 	double Amax;
+	double rho;
+	int niter;
+	int seed;
 };
 
 void parse_dist(FILE *f, struct dist *dist);
