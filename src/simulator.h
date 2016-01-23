@@ -7,10 +7,13 @@ struct cycle {
 	double T;
 	double x;
 	double A;
+	double W;
+	double Wp;
 	double X;
 	double Y;
 	double c;
 	double S;
+	double z;
 };
 
 enum dist_type {
