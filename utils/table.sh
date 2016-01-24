@@ -16,8 +16,8 @@ done
 printf ",mean,sd\n"
 
 getkey() {
-	KEY=$1
-	printf $KEY
+	KEY="$1"
+	printf "$KEY"
 	VALS=()
 	ACC=0
 	for SEED in ${SEEDS[@]}
