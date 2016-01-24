@@ -8,6 +8,8 @@ struct cycle {
 	double x;
 	double A;
 	double W;
+	double Wq;
+	double D;
 	double Wp;
 	double X;
 	double Y;

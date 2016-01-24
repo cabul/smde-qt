@@ -2,13 +2,28 @@
 #include <stdlib.h>
 #include <time.h>
 #include <getopt.h>
+#include <math.h>
 
 #include "utils.h"
 #include "simulator.h"
 
+void generate(double t, struct dist *dist, double *n, double *W) {
+	*n = 0;
+	*W = 0.0;
+	double theta = 0.0;
+
+	while (theta < t) {
+		double dtheta = rand_dist(dist);
+		*W += *n * (min(t, theta+dtheta) - theta);
+		theta += dtheta;
+		if (theta < t) *n += 1;
+	}
+}
+
 int main (int argc, char *argv[]) {
 	int opt, opt_index;
-	FILE *f = NULL;
+	FILE *infile = NULL;
+	FILE *outfile = stdout;
 
 	struct params params;
 	params.niter = 100;
@@ -21,22 +36,23 @@ int main (int argc, char *argv[]) {
 		{"rho",    required_argument, 0, 'r'},
 		{"cycles", required_argument, 0, 'c'},
 		{"seed",   required_argument, 0, 's'},
+		{"output",   required_argument, 0, 'o'},
 		{0, 0, 0, 0}
 	};
 
-	while ((opt = getopt_long(argc, argv, "hf:r:c:s:", options, &opt_index)) != -1) {
+	while ((opt = getopt_long(argc, argv, "hf:r:c:s:o:", options, &opt_index)) != -1) {
 		switch (opt) {
 			case 'h':
 				printf("Usage: %s --file f [--rho r] [--cycles c] [--seed s]\n", argv[0]);
 				return 0;
 			case 'f':
-				f = fopen(optarg, "r");
-				check(f, "Unable to open %s for reading", optarg);
-				parse_params(f, &params);
-				fclose(f);
+				infile = fopen(optarg, "r");
+				check(infile, "Unable to open %s for reading", optarg);
+				parse_params(infile, &params);
+				fclose(infile);
 				break;
 			case 'r':
-				params.rho = atoi(optarg);
+				params.rho = atof(optarg);
 				check(params.rho > 0, "Rho have to be a positive real value");
 				break;
 			case 'c':
@@ -46,10 +62,13 @@ int main (int argc, char *argv[]) {
 			case 's':
 				params.seed = atof(optarg);
 				break;
+			case 'o':
+				outfile = fopen(optarg, "w");
+				check(outfile, "Unable to open %s for writing", optarg);
 		}
 	}
 
-	check(f, "An input file describing the bulk system is needed");
+	check(infile, "An input file describing the bulk system is needed");
 
 	srand(params.seed);
 
@@ -61,13 +80,27 @@ int main (int argc, char *argv[]) {
 	fprintf(stderr, "c distribution:\n");
 	draw_dist(stderr, &params.dist_c);
 
-	struct dist dist_U = {  // 1-erlang, exp
+	// prettyfy this
+	struct dist dist_U = {
 		.type = ERLANG,
 		.data.erlang = {
 			.shape = 1,
-			.rate = 1 / params.mu
+			.rate = 1 / (params.rho * params.mu) 
 		}
 	};
+	fprintf(stderr, "U distribution:\n");
+	draw_dist(stderr, &dist_U);
+
+	struct dist dist_eps = {  // 1-erlang, exp
+		.type = ERLANG,
+		.data.erlang = {
+			.shape = 1,
+			.rate = params.mu
+		}
+	};
+	
+	fprintf(stderr, "eps distribution:\n");
+	draw_dist(stderr, &dist_eps);
 
 	struct cycle *cycles = malloc(sizeof(struct cycle) * params.niter);
 	memcheck(cycles);
@@ -100,51 +133,30 @@ int main (int argc, char *argv[]) {
 	cycles[0].X    = 0.0;
 	cycles[0].T    = 0.0;
 
-	double sim_time = 0.0;
-	double time_limit = 0.0;
-
 	// TODO: to draw the evolution of the queue we can print 
 	// sim_time,queuesize each Ti,Ti+xi
 	for (int i=0; i<params.niter-1; ++i) {
 		cycles[i].tau = rand_dist(&params.dist_tau);
 		cycles[i].tau = max(cycles[i].x, cycles[i].tau);   // time between servers arrive
-		cycles[i+1].T = cycles[i].T + cycles[i].tau;       // server arrives
 		cycles[i+1].x = rand_dist(&params.dist_x);         // service time of server
-		cycles[i+1].c = rand_dist(&params.dist_c);         // service's capacity
+		cycles[i+1].c = round(rand_dist(&params.dist_c));         // service's capacity
 
-		int A_1 = (sim_time > time_limit) ? 1 : 0;         // extra arrival added to A1
-		time_limit += cycles[i].tau - cycles[i].x;         // limit time for A1
-		while (sim_time <= time_limit) {
-			double arrival_time = rand_dist(&dist_U);
-			sim_time += arrival_time;
-			++A_1;
-		}
-		if (sim_time > time_limit) --A_1;                  // extra arrival for A1
+		double A_1;
+		generate(cycles[i].tau - cycles[i].x, &dist_U, &A_1, &cycles[i].Wq);
+		debug("A_1 %g", A_1);
 
-		int A_2 = (sim_time > time_limit) ? 1 : 0;         // extra arrival added to A2
-		time_limit += cycles[i+1].x;                       // timi limit for A2
-		while (sim_time <= time_limit) {
-			// I think we mixed the client arrival distribution
-			// with the client serving distribution (?)
-			// Last paragraph page 1
-			double arrival_time = rand_dist(&dist_U);
-			sim_time += arrival_time;
-			++A_2;
-		}
-		if (sim_time > time_limit) --A_2;                  // extra arrival for A2
+		double A_2;
+		generate(cycles[i+1].x, &dist_U, &A_2, &cycles[i].D);
+		debug("A_2 %g", A_2);
 
-		cycles[i].A = A_1 + A_2;                           // total client arrivals of cycle
-
-		// TODO: missing vars Wqi, Di, Wi, Wpi
-
-		cycles[i+1].S = 0;                                 // 0 served clients at the beginning
-		time_limit = cycles[i+1].x;
-		while (sim_time <= time_limit) {                   // serve clients
-			sim_time += rand_dist(&dist_U);                // TODO: checkthisout.png
-			++cycles[i+1].S;
-		}
-		if (sim_time > time_limit) --cycles[i+1].S;        // whoopsie
-
+		cycles[i].A = min(A_1 + A_2, params.Amax);         // total client arrivals of cycle
+		cycles[i].W = cycles[i].Wq + cycles[i].X * cycles[i].tau + A_1 * cycles[i+1].x + cycles[i].D;
+		cycles[i].Wp = cycles[i].Wq + cycles[i].X * cycles[i].tau + cycles[i].D;
+		
+		double dummy;
+		generate(cycles[i+1].x, &dist_eps, &cycles[i+1].S, &dummy);
+		debug("Si %g", cycles[i+1].S);
+		
 		cycles[i+1].X = max(
 			cycles[i].X + cycles[i].A - min(
 				cycles[i+1].S, cycles[i+1].c), 
@@ -184,7 +196,14 @@ int main (int argc, char *argv[]) {
 		cycles[i].T = cycles[i+1].T;
 		cycles[i].tau = cycles[i+1].tau;
 	}
+	
+	fprintf(outfile, "time,value\n");
+	for (int i = 0; i < params.niter-1; ++i) {
+		fprintf(outfile, "%g,%g\n", cycles[i].T + cycles[i].x, cycles[i].X);
+		fprintf(outfile, "%g,%g\n", cycles[i+1].T, cycles[i].Y);
+	}
 
+	if (outfile != stdout) fclose(outfile);
 	free(cycles);
 	return 0;
 }

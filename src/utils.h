@@ -12,7 +12,7 @@
 
 #define memcheck(M) check(M, "Unable to allocate memory")
 
-#ifdef DEBUG
+#ifndef NDEBUG
 #define debug(M, ...) \
 	do { fprintf(stderr, "[DEBUG] " M , ##__VA_ARGS__); fprintf(stderr, " (%s:%d)\n", __FILE__, __LINE__); } while(0)
 #else
