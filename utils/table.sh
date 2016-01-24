@@ -33,7 +33,7 @@ getkey() {
 	do
 		SD=$(echo "$SD + ($VAL-$MEAN)*($VAL-$MEAN)" | bc -l)
 	done
-	SD=$(echo "$SD / $N" | bc -l)
+	SD=$(echo "sqrt ( $SD / ($N - 1))" | bc -l)
 	printf ",$MEAN,$SD\n"
 }
 
