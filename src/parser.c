@@ -35,6 +35,10 @@ void parse_dist(FILE *f, struct dist *dist) {
 		n = fscanf(f, "%lf", &dist->data.hypo.b);
 		check(n, "Unable to parse b for HYPO");
 		dist->type = HYPO;
+	} else if (streq(id, "EXP")) {
+		n = fscanf(f, "%lf", &dist->data.exp.rate);
+		check(n, "Unable to parse a for HYPO");
+		dist->type = EXP;
 	} else die("Unkown distribution %s", id);
 }
 
@@ -54,6 +58,9 @@ void print_dist(FILE *f, struct dist *dist) {
 			break;
 		case HYPO:
 			fprintf(f, "HYPO %lf %lf\n", dist->data.hypo.a, dist->data.hypo.b);
+			break;
+		case EXP:
+			fprintf(f, "EXP %lf\n", dist->data.exp.rate);
 			break;
 	}
 }

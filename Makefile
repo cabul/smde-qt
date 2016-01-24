@@ -13,5 +13,8 @@ build/%.o: src/%.c
 	@echo "Compiling $<"
 	$(CC) $(CFLAGS) -c $< -o $@
 
+images/%.png: traces/%.csv
+	utils/script.R $< $@
+
 clean:
-	rm -rf $(TARGET) build/*
+	rm -rf $(TARGET) build/* 

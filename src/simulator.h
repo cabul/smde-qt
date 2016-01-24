@@ -19,7 +19,7 @@ struct cycle {
 };
 
 enum dist_type {
-	CONS, UNIF, ERLANG, NORM, HYPO
+	CONS, UNIF, ERLANG, NORM, HYPO, EXP
 };
 
 union dist_data {
@@ -42,6 +42,9 @@ union dist_data {
 		double a;
 		double b;
 	} hypo;
+	struct {
+		double rate;
+	} exp;
 };
 
 struct dist {

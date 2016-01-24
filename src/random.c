@@ -45,6 +45,7 @@ double rand_dist(struct dist *dist) {
 		case NORM: return rand_norm(dist->data.norm.mean, dist->data.norm.dev);
 		case ERLANG: return rand_erlang(dist->data.erlang.shape, dist->data.erlang.rate);
 		case HYPO: return rand_hypo(dist->data.hypo.a, dist->data.hypo.b);
+		case EXP: return rand_exp(dist->data.exp.rate);
 		default: return 0;
 	}
 }
