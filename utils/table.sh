@@ -1,11 +1,12 @@
 #!/bin/bash
 
-[[ -z $SEEDS ]] && SEEDS=(`seq 1 10`)
+[[ -z $SEEDS ]] && SEEDS=`seq 1 10`
 [[ -z $CYCLES ]] && CYCLES=100
 RHO=0.98
 
+SEEDS=($SEEDS)
+
 N=${#SEEDS[@]}
-echo $N
 
 printf "value"
 for SEED in ${SEEDS[@]}
