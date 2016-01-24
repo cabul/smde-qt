@@ -92,6 +92,9 @@ int main (int argc, char *argv[]) {
 	}
 
 	double lambda = params.rho * min(params.Ec, params.mu * params.Ex) / params.Etau;
+	
+	printf("Lambda: %g\n", lambda);
+	printf("Mu: %g\n", params.mu);
 
 	// prettyfy this
 	struct dist dist_U = {
@@ -261,8 +264,8 @@ int main (int argc, char *argv[]) {
 	printf("sd   Y:   %.2f\n", sqrt( (N/(N-1.0)) * (sigma_Y/N - (total_Y*total_Y)/(N*N))));
 	printf("mean z:   %.2f\n", total_z/params.niter);
 	printf("sd   z:   %.2f\n", sqrt( (N/(N-1.0)) * (sigma_z/N - (total_z*total_z)/(N*N))));
-	total_W /= (N*total_A);
-	total_Wp /= (N*total_A);
+	total_W /= (N*(total_A/N));
+	total_Wp /= (N*(total_A/N));
 	printf("W/W0:     %.2f\n", total_W/W0);
 	printf("W'/W0:    %.2f\n", total_Wp/W0);
 	
