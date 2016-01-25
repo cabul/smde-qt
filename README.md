@@ -37,7 +37,7 @@ Where _PD(x)_ is the probability distributions used for variable _x_. The suppor
 
 To get a representation based on the trace file run the following command (Note: R must be installed):
 
-	$ make sth.png    # Assumes sth.csv exists
+	$ make images/sth.png    # Assumes traces/sth.csv exists
 
 You can also run these scripts directly:
 
