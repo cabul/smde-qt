@@ -44,3 +44,13 @@ You can also run these scripts directly:
 
 	$ utils/script.R in.csv out.png    # Used for the command above 
 	$ SEEDS=`seq 1 10` CYCLES=100 utils/table.sh  # Generates a table with values for different seeds
+
+The structure of the project is the following:
+
+	src/       Source files
+	build/     Build files  
+	bin/       Location of executable
+	utils/     Utility scripts
+	data/      Sample input data
+	traces/    Location of execution traces
+	images/    Visual representation of traces

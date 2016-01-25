@@ -2,6 +2,7 @@
 
 #include "stdio.h"
 
+// Information saved each cycle
 struct cycle {
 	double tau;
 	double T;
@@ -17,6 +18,8 @@ struct cycle {
 	double S;
 	double z;
 };
+
+// Probability distributions
 
 enum dist_type {
 	CONS, UNIF, ERLANG, NORM, HYPO, EXP
@@ -52,6 +55,8 @@ struct dist {
 	union dist_data data;
 };
 
+// Input parameters
+
 struct params {
 	double Etau;
 	struct dist dist_tau;
@@ -67,17 +72,19 @@ struct params {
 	int seed;
 };
 
+// Input utilities
 void parse_dist(FILE *f, struct dist *dist);
 void print_dist(FILE *f, struct dist *dist);
 void parse_params(FILE *f, struct params *params);
 void print_params(FILE *f, struct params *params);
 
+// Generate random numbers
 double rand_unif(double a, double b);
 double rand_norm(double mean, double dev);
 double rand_erlang(int shape, double rate);
 double rand_exp(double rate);
 double rand_hypo(double a, double b);
 
+// Distribution utilities
 double rand_dist(struct dist *dist);
-
 void draw_dist(FILE *f, struct dist *dist);

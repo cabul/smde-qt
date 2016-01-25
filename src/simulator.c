@@ -9,6 +9,8 @@
 #include "utils.h"
 #include "simulator.h"
 
+// Generate a number n of occurences of dist over time t
+// The accumulated time is saved in W
 void generate(double t, struct dist *dist, double *n, double *W) {
 	*n = 0;
 	*W = 0.0;
@@ -45,6 +47,7 @@ int main (int argc, char *argv[]) {
 		{0, 0, 0, 0}
 	};
 
+	// Parse parameters
 	while ((opt = getopt_long(argc, argv, "hf:r:c:s:o:v", options, &opt_index)) != -1) {
 		switch (opt) {
 			case 'h':
@@ -81,20 +84,15 @@ int main (int argc, char *argv[]) {
 
 	srand(params.seed);
 
+	// We can calculate lambda based on the given parameters
+	//
+	//             E[A]            where:    E[A] = lambda x E[tau]
+	// rho = ----------------                E[s] = mu x E[x]
+	//        min{E[c],E[S]}
+	//
 	double lambda = params.rho * min(params.Ec, params.mu * params.Ex) / params.Etau;
 
-	if (verbose) {
-		printf("Lambda: %g\n", lambda);
-		printf("Mu: %g\n", params.mu);
-		print_params(stderr, &params);
-		fprintf(stderr, "tau distribution:\n");
-		draw_dist(stderr, &params.dist_tau);
-		fprintf(stderr, "x distribution:\n");
-		draw_dist(stderr, &params.dist_x);
-		fprintf(stderr, "c distribution:\n");
-		draw_dist(stderr, &params.dist_c);
-	}
-
+	// Distribution for arrival times of clients
 	struct dist dist_U = {
 		.type = EXP,
 		.data.exp = {
@@ -103,10 +101,9 @@ int main (int argc, char *argv[]) {
 	};
 	
 	if (verbose) {
-		fprintf(stderr, "U distribution:\n");
-		draw_dist(stderr, &dist_U);
 	}
 
+	// Distribution for the service times (normal vs. exponential)
 #ifdef USE_NORM
 	struct dist dist_eps = {
 		.type = NORM,
@@ -125,6 +122,17 @@ int main (int argc, char *argv[]) {
 #endif
 	
 	if (verbose) {
+		printf("Lambda: %g\n", lambda);
+		printf("Mu: %g\n", params.mu);
+		print_params(stderr, &params);
+		fprintf(stderr, "tau distribution:\n");
+		draw_dist(stderr, &params.dist_tau);
+		fprintf(stderr, "x distribution:\n");
+		draw_dist(stderr, &params.dist_x);
+		fprintf(stderr, "c distribution:\n");
+		draw_dist(stderr, &params.dist_c);
+		fprintf(stderr, "U distribution:\n");
+		draw_dist(stderr, &dist_U);
 		fprintf(stderr, "eps distribution:\n");
 		draw_dist(stderr, &dist_eps);
 	}
@@ -164,8 +172,6 @@ int main (int argc, char *argv[]) {
 	cycles[0].X    = 0.0;
 	cycles[0].T    = 0.0;
 
-	// TODO: to draw the evolution of the queue we can print 
-	// sim_time,queuesize each Ti,Ti+xi
 	for (int i=0; i<params.niter-1; ++i) {
 		cycles[i].tau = rand_dist(&params.dist_tau);
 		cycles[i].tau = max(cycles[i].x, cycles[i].tau);   // time between servers arrive
@@ -267,6 +273,7 @@ int main (int argc, char *argv[]) {
 	printf("W/W0:     %.2f\n", total_W/W0);
 	printf("W'/W0:    %.2f\n", total_Wp/W0);
 	
+	// Print trace of execution
 	if (outfile) {
 		fprintf(outfile, "time,queue\n");
 		fprintf(outfile, "0,0\n");

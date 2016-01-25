@@ -5,6 +5,8 @@
 
 #include "utils.h"
 
+// Draw a distribution
+// Histogram with 10 intervals
 void draw_dist(FILE *f, struct dist *dist) {
 	const int nrolls = 10000;
 	const int nstars = 100;

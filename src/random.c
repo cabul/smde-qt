@@ -6,6 +6,8 @@
 
 #define NLAYERS 256
 
+// Randomly generate values for different probability distribution
+
 double rand_unif(double a, double b) {
 	double r = (double)rand()/(double)RAND_MAX;
 	return a + r * (b-a);
@@ -40,12 +42,12 @@ double rand_hypo(double a, double b) {
 
 double rand_dist(struct dist *dist) {
 	switch(dist->type) {
-		case CONS: return dist->data.cons.value;
-		case UNIF: return rand_unif(dist->data.unif.a, dist->data.unif.b);
-		case NORM: return rand_norm(dist->data.norm.mean, dist->data.norm.dev);
+		case CONS:   return dist->data.cons.value;
+		case UNIF:   return rand_unif(dist->data.unif.a, dist->data.unif.b);
+		case NORM:   return rand_norm(dist->data.norm.mean, dist->data.norm.dev);
 		case ERLANG: return rand_erlang(dist->data.erlang.shape, dist->data.erlang.rate);
-		case HYPO: return rand_hypo(dist->data.hypo.a, dist->data.hypo.b);
-		case EXP: return rand_exp(dist->data.exp.rate);
+		case HYPO:   return rand_hypo(dist->data.hypo.a, dist->data.hypo.b);
+		case EXP:    return rand_exp(dist->data.exp.rate);
 		default: return 0;
 	}
 }
