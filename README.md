@@ -6,7 +6,8 @@ Implementation of a bulk system simulator for the course Statistical modelling a
 
 To build:
 
-	$ make
+	$ make             # Uses the exponential distribution for service times
+	$ make -dUSE_NORM  # Uses the normal distribution for service times
 
 To run:
 
