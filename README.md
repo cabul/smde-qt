@@ -27,7 +27,7 @@ The input file has to be in the following format:
 	mu
 	Amax
 
-Where _PD(x)_ is the probability distributions used for variable _x_. The supported distributions are the following(values in <> are numbers):
+Where _PD(x)_ is the probability distributions used for variable _x_. The supported distributions are the following (values in <> are numbers):
 
 	CONS <num>            # Constant value
 	UNIF <a> <b>          # Uniform distribution
@@ -35,3 +35,11 @@ Where _PD(x)_ is the probability distributions used for variable _x_. The suppor
 	EXP <rate>            # Exponential distribution
 	ERLANG <shape> <rate> # k-Erlang distribution
 
+To get a representation based on the trace file run the following command (Note: R must be installed):
+
+	$ make sth.png    # Assumes sth.csv exists
+
+You can also run these scripts directly:
+
+	$ utils/script.R in.csv out.png    # Used for the command above 
+	$ SEEDS=`seq 1 10` CYCLES=100 utils/table.sh  # Generates a table with values for different seeds
