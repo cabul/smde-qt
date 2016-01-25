@@ -81,7 +81,11 @@ int main (int argc, char *argv[]) {
 
 	srand(params.seed);
 
+	double lambda = params.rho * min(params.Ec, params.mu * params.Ex) / params.Etau;
+
 	if (verbose) {
+		printf("Lambda: %g\n", lambda);
+		printf("Mu: %g\n", params.mu);
 		print_params(stderr, &params);
 		fprintf(stderr, "tau distribution:\n");
 		draw_dist(stderr, &params.dist_tau);
@@ -91,12 +95,6 @@ int main (int argc, char *argv[]) {
 		draw_dist(stderr, &params.dist_c);
 	}
 
-	double lambda = params.rho * min(params.Ec, params.mu * params.Ex) / params.Etau;
-	
-	printf("Lambda: %g\n", lambda);
-	printf("Mu: %g\n", params.mu);
-
-	// prettyfy this
 	struct dist dist_U = {
 		.type = EXP,
 		.data.exp = {
